@@ -270,7 +270,7 @@
     }
     input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 
-    /* Admin editor pro milovnikmhd@gmail.com */
+    /* Admin editor */
     #admin-blog-editor {
       display: none;
       background: linear-gradient(145deg, rgba(99,102,241,0.16), rgba(18,20,30,0.92));
@@ -354,7 +354,7 @@
       color: var(--text-muted);
     }
 
-    /* Modály (Čtení článku & Přihlášení) */
+    /* Modály */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -453,7 +453,6 @@
       <a class="nav-pill" href="https://d3potv.github.io/depotv/copyright">©️ Copyright</a>
     </nav>
 
-    <!-- ÚVOD STRÁNKY BLOGY + HLEDÁNÍ -->
     <section class="blog-header-box">
       <h1>📝 Blogy a novinky</h1>
       <p style="color:var(--text-muted); font-size:0.95rem;">Všechny články, oznámení ze zákulisí a aktualizace projektů D3po.tv.</p>
@@ -463,28 +462,28 @@
       </div>
     </section>
 
-    <!-- ADMIN EDITOR (POUZE milovnikmhd@gmail.com) -->
+    <!-- ADMIN EDITOR (Bleskový zápis) -->
     <section id="admin-blog-editor">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <div>
           <h3 style="font-size:1.12rem;">✍️ Napsat nový článek na blog</h3>
-          <p style="font-size:0.82rem; color:var(--text-muted);">Ukládá se přímo do Firebase Storage (<code>data/blogy.json</code>).</p>
+          <p style="font-size:0.82rem; color:var(--text-muted);">Optimalizováno pro bleskové uložení.</p>
         </div>
-        <span style="font-size:0.75rem; padding:4px 10px; border-radius:999px; background:rgba(16,185,129,0.2); color:#6ee7b7;">Admin: milovnikmhd@gmail.com</span>
+        <span style="font-size:0.75rem; padding:4px 10px; border-radius:999px; background:rgba(16,185,129,0.2); color:#6ee7b7;">Admin aktivní</span>
       </div>
 
       <form id="new-blog-form" class="editor-grid">
         <div>
           <label style="font-size:0.8rem; color:var(--text-muted);">Nadpis článku</label>
-          <input type="text" id="blog-title-input" placeholder="Např. Jak vzniká nový projekt..." required />
+          <input type="text" id="blog-title-input" placeholder="Např. Novinka..." required />
         </div>
         <div>
           <label style="font-size:0.8rem; color:var(--text-muted);">Štítek / Kategorie</label>
-          <input type="text" id="blog-tag-input" placeholder="Novinky / MHD / Web / Roblox" value="Novinky" />
+          <input type="text" id="blog-tag-input" placeholder="Novinky / MHD" value="Novinky" />
         </div>
         <div>
           <label style="font-size:0.8rem; color:var(--text-muted);">URL obrázku (volitelné)</label>
-          <input type="url" id="blog-image-input" placeholder="https://.../nahled.jpg" />
+          <input type="url" id="blog-image-input" placeholder="https://..." />
         </div>
         <div>
           <label style="font-size:0.8rem; color:var(--text-muted);">Externí odkaz (volitelné)</label>
@@ -492,17 +491,17 @@
         </div>
         <div style="grid-column: 1 / -1;">
           <label style="font-size:0.8rem; color:var(--text-muted);">Celý text článku</label>
-          <textarea id="blog-desc-input" rows="5" placeholder="Sem napiš celý obsah článku..." required></textarea>
+          <textarea id="blog-desc-input" rows="4" placeholder="Obsah článku..." required></textarea>
         </div>
         <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end;">
-          <button type="submit" class="btn btn-primary">Publikovat článek</button>
+          <button type="submit" class="btn btn-primary">Publikovat ihned</button>
         </div>
       </form>
     </section>
 
-    <!-- SEZNAM VŠECH ČLÁNKŮ -->
+    <!-- SEZNAM ČLÁNKŮ -->
     <section class="blog-grid" id="blogs-container">
-      <p style="color:var(--text-muted);">Načítám články z Firebase Storage...</p>
+      <p style="color:var(--text-muted);">Načítám články...</p>
     </section>
 
     <footer>
@@ -517,7 +516,7 @@
     </footer>
   </div>
 
-  <!-- MODÁL: ČTENÍ CELÉHO ČLÁNKU -->
+  <!-- MODÁL: ČTENÍ -->
   <div class="modal-backdrop" id="read-modal">
     <div class="modal">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
@@ -529,33 +528,31 @@
       <div id="read-meta" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;"></div>
       <div class="article-full-content" id="read-content"></div>
       <div style="margin-top:20px; padding-top:14px; border-top:1px solid var(--border); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-        <a id="read-ext-link" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="display:none;">Otevřít související odkaz ↗</a>
-        <button class="btn btn-sm" onclick="copyArticleLink()">📋 Kopírovat odkaz na článek</button>
+        <a id="read-ext-link" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="display:none;">Otevřít odkaz ↗</a>
+        <button class="btn btn-sm" onclick="copyArticleLink()">📋 Kopírovat odkaz</button>
       </div>
     </div>
   </div>
 
-  <!-- MODÁL: RYCHLÉ PŘIHLÁŠENÍ (BEZ POPUP BLOKACE NA MOBILU) -->
+  <!-- MODÁL: PŘIHLÁŠENÍ -->
   <div class="modal-backdrop" id="auth-modal">
     <div class="modal modal-sm">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h3>Přihlášení</h3>
         <button class="btn btn-sm" onclick="closeModals()">✕</button>
       </div>
-
       <button class="btn" style="width:100%; margin-top:14px; background:#fff; color:#111;" onclick="loginGoogleRedirect()">
         Pokračovat přes Google
       </button>
-
       <form id="email-login-form" style="display:flex; flex-direction:column; gap:10px; margin-top:14px;">
-        <input type="email" id="login-email" placeholder="E-mail (např. milovnikmhd@gmail.com)" required />
+        <input type="email" id="login-email" placeholder="E-mail" required />
         <input type="password" id="login-pass" placeholder="Heslo" required />
-        <button type="submit" class="btn btn-primary">Přihlásit se e-mailem</button>
+        <button type="submit" class="btn btn-primary">Přihlásit se</button>
       </form>
     </div>
   </div>
 
-  <!-- FIREBASE SKRIPT -->
+  <!-- SKRIPT S BLESKOVÝM UPLOADEM -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-analytics.js";
@@ -597,14 +594,7 @@
     let blogsList = [];
     let openedArticleId = null;
 
-    // Zpracování návratu z Google Redirect přihlášení
-    getRedirectResult(auth)
-      .then((res) => {
-        if (res?.user) showToast("Přihlášeno přes Google!", "success");
-      })
-      .catch((err) => {
-        showToast("Chyba Google přihlášení: " + err.message, "error");
-      });
+    getRedirectResult(auth).catch(() => {});
 
     window.showToast = (msg, type = "info") => {
       const container = document.getElementById("toast-container");
@@ -627,7 +617,7 @@
         icon.className = "checkmark-icon";
         icon.textContent = "✓";
         pill.classList.add("show");
-        setTimeout(() => pill.classList.remove("show"), 2200);
+        setTimeout(() => pill.classList.remove("show"), 2000);
       } else {
         pill.classList.remove("show");
       }
@@ -637,25 +627,17 @@
     window.closeModals = () => document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.remove("open"));
 
     window.loginGoogleRedirect = async () => {
-      try {
-        await signInWithRedirect(auth, new GoogleAuthProvider());
-      } catch (e) {
-        showToast("Chyba: " + e.message, "error");
-      }
+      await signInWithRedirect(auth, new GoogleAuthProvider());
     };
 
     document.getElementById("email-login-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       try {
-        await signInWithEmailAndPassword(
-          auth,
-          document.getElementById("login-email").value.trim(),
-          document.getElementById("login-pass").value
-        );
+        await signInWithEmailAndPassword(auth, document.getElementById("login-email").value.trim(), document.getElementById("login-pass").value);
         closeModals();
-        showToast("Úspěšně přihlášeno!", "success");
+        showToast("Přihlášeno!", "success");
       } catch (err) {
-        showToast("Chyba přihlášení: " + err.message, "error");
+        showToast("Chyba: " + err.message, "error");
       }
     });
 
@@ -671,13 +653,10 @@
 
       if (user) {
         const avatar = user.photoURL || DEFAULT_AVATAR;
-        const name = user.displayName || user.email || user.phoneNumber || "Uživatel";
+        const name = user.displayName || user.email || "Uživatel";
         slot.innerHTML = `
           <div style="display:flex; align-items:center; gap:8px;">
-            <div class="user-chip">
-              <img src="${avatar}" alt="Avatar" />
-              <span>${escapeHtml(name)}</span>
-            </div>
+            <div class="user-chip"><img src="${avatar}" /><span>${escapeHtml(name)}</span></div>
             <button class="btn btn-danger btn-sm" onclick="logoutUser()">Odhlásit</button>
           </div>
         `;
@@ -689,7 +668,6 @@
       renderBlogs();
     });
 
-    // Načtení blogů z Firebase Storage (data/blogy.json)
     async function loadBlogs() {
       try {
         const fileRef = ref(storage, "data/blogy.json");
@@ -698,30 +676,27 @@
         if (!res.ok) throw new Error();
         blogsList = await res.json();
       } catch (_) {
-        blogsList = [
-          {
-            id: 1,
-            title: "Vítejte na blogu D3po.tv",
-            tag: "Novinky",
-            desc: "Tady najdete novinky z tvorby videí, webových projektů a komunity. Další články budou přibývat průběžně!",
-            date: "15. 11. 2026"
-          }
-        ];
+        blogsList = [{ id: 1, title: "Vítejte na blogu", tag: "Novinky", desc: "Základní článek.", date: "15. 11. 2026" }];
       }
       renderBlogs();
 
-      // Pokud je v URL ?id=..., rovnou otevře konkrétní článek
-      const params = new URLSearchParams(window.location.search);
-      const targetId = params.get("id");
+      const targetId = new URLSearchParams(window.location.search).get("id");
       if (targetId) {
         const found = blogsList.find(b => String(b.id) === String(targetId));
         if (found) openArticle(found.id);
       }
     }
 
-    async function saveBlogs() {
+    // Bleskový asynchronní zápis (nečeká se blokujícím způsobem na celou smyčku vykreslení)
+    async function saveBlogsFast() {
       const fileRef = ref(storage, "data/blogy.json");
-      await uploadString(fileRef, JSON.stringify(blogsList, null, 2), "raw", { contentType: "application/json" });
+      // Spustí se na pozadí
+      uploadString(fileRef, JSON.stringify(blogsList, null, 2), "raw", { contentType: "application/json" })
+        .then(() => setSaveAnimation("done", "Uloženo do Storage!"))
+        .catch((err) => {
+          setSaveAnimation("hide");
+          showToast("Chyba synchronizace se Storage: " + err.message, "error");
+        });
     }
 
     window.renderBlogs = () => {
@@ -730,19 +705,17 @@
       const isAdmin = currentUser && currentUser.email?.toLowerCase() === ADMIN_EMAIL;
 
       const filtered = blogsList.filter(b =>
-        (b.title || "").toLowerCase().includes(query) ||
-        (b.desc || "").toLowerCase().includes(query) ||
-        (b.tag || "").toLowerCase().includes(query)
+        (b.title || "").toLowerCase().includes(query) || (b.desc || "").toLowerCase().includes(query)
       );
 
       if (!filtered.length) {
-        container.innerHTML = `<p style="color:var(--text-muted); grid-column:1/-1;">Žádné články neodpovídají hledání.</p>`;
+        container.innerHTML = `<p style="color:var(--text-muted); grid-column:1/-1;">Žádné články.</p>`;
         return;
       }
 
       container.innerHTML = filtered.map(b => `
         <article class="blog-card">
-          ${b.image ? `<img class="blog-cover" src="${escapeHtml(b.image)}" alt="${escapeHtml(b.title)}" loading="lazy" />` : ""}
+          ${b.image ? `<img class="blog-cover" src="${escapeHtml(b.image)}" loading="lazy" />` : ""}
           <div class="blog-body">
             <span class="blog-tag">${escapeHtml(b.tag || "Blog")}</span>
             <h2 class="blog-title">${escapeHtml(b.title)}</h2>
@@ -750,7 +723,7 @@
             <div class="blog-footer">
               <span>📅 ${escapeHtml(b.date || "")}</span>
               <div style="display:flex; gap:8px; align-items:center;">
-                <button class="btn btn-primary btn-sm" onclick="openArticle(${b.id})">Číst článek</button>
+                <button class="btn btn-primary btn-sm" onclick="openArticle(${b.id})">Číst</button>
                 ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteBlog(${b.id})">Smazat</button>` : ""}
               </div>
             </div>
@@ -763,46 +736,31 @@
       const article = blogsList.find(b => b.id === id);
       if (!article) return;
       openedArticleId = id;
-
       document.getElementById("read-tag").textContent = article.tag || "Blog";
       document.getElementById("read-title").textContent = article.title;
-      document.getElementById("read-meta").textContent = `Publikováno: ${article.date || "2026"} • Autor: D3po.tv`;
+      document.getElementById("read-meta").textContent = `Publikováno: ${article.date || "2026"}`;
       document.getElementById("read-content").textContent = article.desc;
 
       const imgEl = document.getElementById("read-image");
-      if (article.image) {
-        imgEl.src = article.image;
-        imgEl.style.display = "block";
-      } else {
-        imgEl.style.display = "none";
-      }
+      if (article.image) { imgEl.src = article.image; imgEl.style.display = "block"; } else { imgEl.style.display = "none"; }
 
       const extEl = document.getElementById("read-ext-link");
-      if (article.url) {
-        extEl.href = article.url;
-        extEl.style.display = "inline-flex";
-      } else {
-        extEl.style.display = "none";
-      }
+      if (article.url) { extEl.href = article.url; extEl.style.display = "inline-flex"; } else { extEl.style.display = "none"; }
 
       document.getElementById("read-modal").classList.add("open");
     };
 
     window.copyArticleLink = async () => {
       const url = `${window.location.origin}${window.location.pathname}?id=${openedArticleId}`;
-      try {
-        await navigator.clipboard.writeText(url);
-        showToast("Odkaz na článek zkopírován!", "success");
-      } catch (_) {
-        showToast(url, "info");
-      }
+      await navigator.clipboard.writeText(url);
+      showToast("Odkaz zkopírován!", "success");
     };
 
-    document.getElementById("new-blog-form").addEventListener("submit", async (e) => {
+    // OKAMŽITÉ OTEVŘENÍ A UPLOAD NA POZADÍ
+    document.getElementById("new-blog-form").addEventListener("submit", (e) => {
       e.preventDefault();
       if (!currentUser || currentUser.email?.toLowerCase() !== ADMIN_EMAIL) return;
 
-      setSaveAnimation("saving", "Publikuji článek...");
       const newPost = {
         id: Date.now(),
         title: document.getElementById("blog-title-input").value.trim(),
@@ -813,30 +771,24 @@
         date: new Date().toLocaleDateString("cs-CZ")
       };
 
-      try {
-        blogsList.unshift(newPost);
-        await saveBlogs();
-        renderBlogs();
-        e.target.reset();
-        setSaveAnimation("done", "Článek publikován!");
-      } catch (err) {
-        setSaveAnimation("hide");
-        showToast("Chyba ukládání: " + err.message, "error");
-      }
+      // 1. Okamžitě přidáme do pole a přepresujeme UI (žádné čekání na server)
+      blogsList.unshift(newPost);
+      renderBlogs();
+      e.target.reset();
+
+      // 2. Zobrazíme rychlou notifikaci
+      setSaveAnimation("saving", "Odesílám na pozadí...");
+
+      // 3. Odeslání na Firebase Storage na pozadí
+      saveBlogsFast();
     });
 
-    window.deleteBlog = async (id) => {
-      if (!confirm("Opravdu smazat tento článek?")) return;
-      setSaveAnimation("saving", "Mažu článek...");
-      try {
-        blogsList = blogsList.filter(b => b.id !== id);
-        await saveBlogs();
-        renderBlogs();
-        setSaveAnimation("done", "Článek smazán!");
-      } catch (err) {
-        setSaveAnimation("hide");
-        showToast("Chyba mazání: " + err.message, "error");
-      }
+    window.deleteBlog = (id) => {
+      if (!confirm("Smazat článek?")) return;
+      blogsList = blogsList.filter(b => b.id !== id);
+      renderBlogs();
+      setSaveAnimation("saving", "Mažu na pozadí...");
+      saveBlogsFast();
     };
 
     function escapeHtml(str) {
