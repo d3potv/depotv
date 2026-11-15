@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>D3po.tv | Blogy</title>
+  <meta property="og:title" content="D3po.tv — Blogy a články" />
+  <meta property="og:description" content="Novinky, články a aktuality od D3po.tv." />
+  <meta name="theme-color" content="#07080c" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #07080c;
+      --bg-card: rgba(18, 20, 30, 0.72);
+      --bg-card-solid: #12141e;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(99, 102, 241, 0.5);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-2: #06b6d4;
+      --accent-3: #a855f7;
+      --success: #10b981;
+      --danger: #ef4444;
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Ambientní pozadí */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.3;
+      animation: floatOrb 18s infinite alternate ease-in-out;
+    }
+    .orb-1 { width: 360px; height: 360px; background: #4f46e5; top: -90px; left: -70px; }
+    .orb-2 { width: 320px; height: 320px; background: #0891b2; bottom: -70px; right: -50px; animation-delay: -7s; }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, -50px) scale(1.15); }
+    }
+
+    /* Animovaná tlačítka */
+    .btn {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: 13px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.25s, border-color 0.25s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .btn::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+      transform: skewX(-22deg);
+      transition: left 0.65s ease;
+    }
+    .btn:hover::after { left: 160%; }
+    .btn:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.11); border-color: rgba(255,255,255,0.22); }
+    .btn:active { transform: scale(0.95); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #4f46e5, var(--accent-3));
+      background-size: 200% 200%;
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.16);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+    }
+    .btn-sm { padding: 7px 12px; font-size: 0.8rem; border-radius: 10px; }
+
+    /* Animace ukládání */
+    .save-status-pill {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      z-index: 9500;
+      background: rgba(15, 17, 26, 0.95);
+      border: 1px solid var(--border-glow);
+      backdrop-filter: blur(16px);
+      padding: 10px 20px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.6);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .save-status-pill.show { transform: translateX(-50%) translateY(0); }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.2);
+      border-top-color: var(--accent-2);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .checkmark-icon {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--success); color: #fff;
+      display: grid; place-items: center; font-size: 0.75rem;
+    }
+
+    /* Toasty */
+    #toast-container {
+      position: fixed;
+      bottom: 20px; right: 16px; left: 16px;
+      max-width: 400px; margin-left: auto;
+      z-index: 9000;
+      display: flex; flex-direction: column; gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      background: rgba(16, 18, 28, 0.96);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      color: var(--text);
+      padding: 13px 16px;
+      border-radius: 14px;
+      font-size: 0.87rem;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+      pointer-events: auto;
+    }
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--danger); }
+
+    /* Layout */
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 18px 16px 80px;
+    }
+
+    header.navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(18px);
+      margin-bottom: 18px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--text);
+      font-weight: 800; font-size: 1.2rem;
+    }
+    .brand-logo {
+      width: 36px; height: 36px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid; place-items: center; font-weight: 800; color: #fff;
+    }
+
+    .page-links-bar {
+      display: flex; gap: 9px; overflow-x: auto;
+      padding-bottom: 6px; margin-bottom: 22px;
+      scrollbar-width: none;
+    }
+    .page-links-bar::-webkit-scrollbar { display: none; }
+    .nav-pill {
+      white-space: nowrap; text-decoration: none; color: var(--text);
+      background: var(--bg-card); border: 1px solid var(--border);
+      padding: 9px 16px; border-radius: 999px;
+      font-size: 0.88rem; font-weight: 600;
+      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 7px;
+    }
+    .nav-pill:hover, .nav-pill.active {
+      background: rgba(99, 102, 241, 0.26);
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+    }
+
+    /* Hlavička sekce + vyhledávání */
+    .blog-header-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(18px);
+    }
+    .blog-header-box h1 {
+      font-size: clamp(1.6rem, 4vw, 2.3rem);
+      font-weight: 800;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #fff 30%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .search-bar {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: rgba(9, 10, 16, 0.85);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 14px;
+    }
+    .search-bar input {
+      border: none;
+      background: transparent;
+      padding: 4px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      background: rgba(9, 10, 16, 0.85);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+
+    /* Admin editor pro milovnikmhd@gmail.com */
+    #admin-blog-editor {
+      display: none;
+      background: linear-gradient(145deg, rgba(99,102,241,0.16), rgba(18,20,30,0.92));
+      border: 1px solid var(--border-glow);
+      border-radius: 24px;
+      padding: 22px;
+      margin-bottom: 26px;
+    }
+    .editor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    /* Seznam článků */
+    .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 20px;
+    }
+    .blog-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(16px);
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+    .blog-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-glow);
+    }
+    .blog-cover {
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+      background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(6,182,212,0.2));
+    }
+    .blog-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 10px;
+    }
+    .blog-tag {
+      align-self: flex-start;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+    }
+    .blog-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    .blog-excerpt {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex: 1;
+    }
+    .blog-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Modály (Čtení článku & Přihlášení) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 6000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--bg-card-solid);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 26px;
+      animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-sm { max-width: 430px; }
+    @keyframes scaleIn {
+      from { transform: scale(0.93); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .article-full-content {
+      margin-top: 16px;
+      font-size: 0.98rem;
+      line-height: 1.75;
+      color: #e2e8f0;
+      white-space: pre-line;
+    }
+
+    .user-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      padding: 5px 12px 5px 6px;
+      border-radius: 999px;
+      font-size: 0.84rem; font-weight: 600;
+    }
+    .user-chip img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+    }
+    footer a { color: var(--text-muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <div id="save-pill" class="save-status-pill">
+    <div id="save-pill-icon" class="spinner"></div>
+    <span id="save-pill-text">Ukládám...</span>
+  </div>
+
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <div class="container">
+    <!-- HLAVIČKA -->
+    <header class="navbar">
+      <a href="https://d3potv.github.io/depotv/" class="brand">
+        <div class="brand-logo">D3</div>
+        <span>D3po.tv</span>
+      </a>
+      <div id="auth-header-slot">
+        <button class="btn btn-primary" onclick="openAuthModal()">Přihlásit se</button>
+      </div>
+    </header>
+
+    <!-- NAVIGACE -->
+    <nav class="page-links-bar" aria-label="Hlavní navigace">
+      <a class="nav-pill" href="https://d3potv.github.io/depotv/">🏠 Domů</a>
+      <a class="nav-pill active" href="https://d3potv.github.io/depotv/blogy">📝 Blogy</a>
+      <a class="nav-pill" href="https://d3potv.github.io/depotv/projekty">🚀 Projekty</a>
+      <a class="nav-pill" href="https://d3potv.github.io/depotv/odkazy">🔗 Odkazy</a>
+      <a class="nav-pill" href="https://d3potv.github.io/depotv/tvurce">👤 Tvůrce</a>
+      <a class="nav-pill" href="https://d3potv.github.io/depotv/copyright">©️ Copyright</a>
+    </nav>
+
+    <!-- ÚVOD STRÁNKY BLOGY + HLEDÁNÍ -->
+    <section class="blog-header-box">
+      <h1>📝 Blogy a novinky</h1>
+      <p style="color:var(--text-muted); font-size:0.95rem;">Všechny články, oznámení ze zákulisí a aktualizace projektů D3po.tv.</p>
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="blog-search" placeholder="Hledat v článcích podle názvu, textu nebo štítku..." oninput="renderBlogs()" />
+      </div>
+    </section>
+
+    <!-- ADMIN EDITOR (POUZE milovnikmhd@gmail.com) -->
+    <section id="admin-blog-editor">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <h3 style="font-size:1.12rem;">✍️ Napsat nový článek na blog</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted);">Ukládá se přímo do Firebase Storage (<code>data/blogy.json</code>).</p>
+        </div>
+        <span style="font-size:0.75rem; padding:4px 10px; border-radius:999px; background:rgba(16,185,129,0.2); color:#6ee7b7;">Admin: milovnikmhd@gmail.com</span>
+      </div>
+
+      <form id="new-blog-form" class="editor-grid">
+        <div>
+          <label style="font-size:0.8rem; color:var(--text-muted);">Nadpis článku</label>
+          <input type="text" id="blog-title-input" placeholder="Např. Jak vzniká nový projekt..." required />
+        </div>
+        <div>
+          <label style="font-size:0.8rem; color:var(--text-muted);">Štítek / Kategorie</label>
+          <input type="text" id="blog-tag-input" placeholder="Novinky / MHD / Web / Roblox" value="Novinky" />
+        </div>
+        <div>
+          <label style="font-size:0.8rem; color:var(--text-muted);">URL obrázku (volitelné)</label>
+          <input type="url" id="blog-image-input" placeholder="https://.../nahled.jpg" />
+        </div>
+        <div>
+          <label style="font-size:0.8rem; color:var(--text-muted);">Externí odkaz (volitelné)</label>
+          <input type="url" id="blog-url-input" placeholder="https://..." />
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label style="font-size:0.8rem; color:var(--text-muted);">Celý text článku</label>
+          <textarea id="blog-desc-input" rows="5" placeholder="Sem napiš celý obsah článku..." required></textarea>
+        </div>
+        <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end;">
+          <button type="submit" class="btn btn-primary">Publikovat článek</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- SEZNAM VŠECH ČLÁNKŮ -->
+    <section class="blog-grid" id="blogs-container">
+      <p style="color:var(--text-muted);">Načítám články z Firebase Storage...</p>
+    </section>
+
+    <footer>
+      <span>© 2026 D3po.tv — Sekce Blogy</span>
+      <div style="display:flex; gap:14px; flex-wrap:wrap;">
+        <a href="https://d3potv.github.io/depotv/">Domů</a>
+        <a href="https://d3potv.github.io/depotv/projekty">Projekty</a>
+        <a href="https://d3potv.github.io/depotv/odkazy">Odkazy</a>
+        <a href="https://d3potv.github.io/depotv/tvurce">Tvůrce</a>
+        <a href="https://d3potv.github.io/depotv/copyright">Copyright</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- MODÁL: ČTENÍ CELÉHO ČLÁNKU -->
+  <div class="modal-backdrop" id="read-modal">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <span class="blog-tag" id="read-tag">Novinky</span>
+        <button class="btn btn-sm" onclick="closeModals()">✕ Zavřít</button>
+      </div>
+      <img id="read-image" src="" alt="" style="display:none; width:100%; max-height:260px; object-fit:cover; border-radius:16px; margin-top:14px;" />
+      <h2 id="read-title" style="margin-top:14px; font-size:1.5rem; line-height:1.3;"></h2>
+      <div id="read-meta" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;"></div>
+      <div class="article-full-content" id="read-content"></div>
+      <div style="margin-top:20px; padding-top:14px; border-top:1px solid var(--border); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <a id="read-ext-link" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="display:none;">Otevřít související odkaz ↗</a>
+        <button class="btn btn-sm" onclick="copyArticleLink()">📋 Kopírovat odkaz na článek</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODÁL: RYCHLÉ PŘIHLÁŠENÍ (BEZ POPUP BLOKACE NA MOBILU) -->
+  <div class="modal-backdrop" id="auth-modal">
+    <div class="modal modal-sm">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Přihlášení</h3>
+        <button class="btn btn-sm" onclick="closeModals()">✕</button>
+      </div>
+
+      <button class="btn" style="width:100%; margin-top:14px; background:#fff; color:#111;" onclick="loginGoogleRedirect()">
+        Pokračovat přes Google
+      </button>
+
+      <form id="email-login-form" style="display:flex; flex-direction:column; gap:10px; margin-top:14px;">
+        <input type="email" id="login-email" placeholder="E-mail (např. milovnikmhd@gmail.com)" required />
+        <input type="password" id="login-pass" placeholder="Heslo" required />
+        <button type="submit" class="btn btn-primary">Přihlásit se e-mailem</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- FIREBASE SKRIPT -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-analytics.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      GoogleAuthProvider,
+      signInWithRedirect,
+      getRedirectResult,
+      signInWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
+    import {
+      getStorage,
+      ref,
+      uploadString,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAY8RGA-VpZwbZVCQ_6kmQW4ugmzWc-uKM",
+      authDomain: "d3potv.firebaseapp.com",
+      projectId: "d3potv",
+      storageBucket: "d3potv.firebasestorage.app",
+      messagingSenderId: "665497735368",
+      appId: "1:665497735368:web:0c76d98d3c5833e4e015fd",
+      measurementId: "G-NGY110XRHB"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+
+    const ADMIN_EMAIL = "milovnikmhd@gmail.com";
+    const DEFAULT_AVATAR = "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=D3po";
+
+    let currentUser = null;
+    let blogsList = [];
+    let openedArticleId = null;
+
+    // Zpracování návratu z Google Redirect přihlášení
+    getRedirectResult(auth)
+      .then((res) => {
+        if (res?.user) showToast("Přihlášeno přes Google!", "success");
+      })
+      .catch((err) => {
+        showToast("Chyba Google přihlášení: " + err.message, "error");
+      });
+
+    window.showToast = (msg, type = "info") => {
+      const container = document.getElementById("toast-container");
+      const el = document.createElement("div");
+      el.className = `toast ${type}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    };
+
+    function setSaveAnimation(state, text) {
+      const pill = document.getElementById("save-pill");
+      const icon = document.getElementById("save-pill-icon");
+      document.getElementById("save-pill-text").textContent = text;
+      if (state === "saving") {
+        icon.className = "spinner";
+        icon.textContent = "";
+        pill.classList.add("show");
+      } else if (state === "done") {
+        icon.className = "checkmark-icon";
+        icon.textContent = "✓";
+        pill.classList.add("show");
+        setTimeout(() => pill.classList.remove("show"), 2200);
+      } else {
+        pill.classList.remove("show");
+      }
+    }
+
+    window.openAuthModal = () => document.getElementById("auth-modal").classList.add("open");
+    window.closeModals = () => document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.remove("open"));
+
+    window.loginGoogleRedirect = async () => {
+      try {
+        await signInWithRedirect(auth, new GoogleAuthProvider());
+      } catch (e) {
+        showToast("Chyba: " + e.message, "error");
+      }
+    };
+
+    document.getElementById("email-login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await signInWithEmailAndPassword(
+          auth,
+          document.getElementById("login-email").value.trim(),
+          document.getElementById("login-pass").value
+        );
+        closeModals();
+        showToast("Úspěšně přihlášeno!", "success");
+      } catch (err) {
+        showToast("Chyba přihlášení: " + err.message, "error");
+      }
+    });
+
+    window.logoutUser = async () => {
+      await signOut(auth);
+      showToast("Odhlášeno.");
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      const slot = document.getElementById("auth-header-slot");
+      const editor = document.getElementById("admin-blog-editor");
+
+      if (user) {
+        const avatar = user.photoURL || DEFAULT_AVATAR;
+        const name = user.displayName || user.email || user.phoneNumber || "Uživatel";
+        slot.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="user-chip">
+              <img src="${avatar}" alt="Avatar" />
+              <span>${escapeHtml(name)}</span>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="logoutUser()">Odhlásit</button>
+          </div>
+        `;
+        editor.style.display = (user.email && user.email.toLowerCase() === ADMIN_EMAIL) ? "block" : "none";
+      } else {
+        slot.innerHTML = `<button class="btn btn-primary" onclick="openAuthModal()">Přihlásit se</button>`;
+        editor.style.display = "none";
+      }
+      renderBlogs();
+    });
+
+    // Načtení blogů z Firebase Storage (data/blogy.json)
+    async function loadBlogs() {
+      try {
+        const fileRef = ref(storage, "data/blogy.json");
+        const url = await getDownloadURL(fileRef);
+        const res = await fetch(url + "&t=" + Date.now());
+        if (!res.ok) throw new Error();
+        blogsList = await res.json();
+      } catch (_) {
+        blogsList = [
+          {
+            id: 1,
+            title: "Vítejte na blogu D3po.tv",
+            tag: "Novinky",
+            desc: "Tady najdete novinky z tvorby videí, webových projektů a komunity. Další články budou přibývat průběžně!",
+            date: "15. 11. 2026"
+          }
+        ];
+      }
+      renderBlogs();
+
+      // Pokud je v URL ?id=..., rovnou otevře konkrétní článek
+      const params = new URLSearchParams(window.location.search);
+      const targetId = params.get("id");
+      if (targetId) {
+        const found = blogsList.find(b => String(b.id) === String(targetId));
+        if (found) openArticle(found.id);
+      }
+    }
+
+    async function saveBlogs() {
+      const fileRef = ref(storage, "data/blogy.json");
+      await uploadString(fileRef, JSON.stringify(blogsList, null, 2), "raw", { contentType: "application/json" });
+    }
+
+    window.renderBlogs = () => {
+      const container = document.getElementById("blogs-container");
+      const query = document.getElementById("blog-search").value.trim().toLowerCase();
+      const isAdmin = currentUser && currentUser.email?.toLowerCase() === ADMIN_EMAIL;
+
+      const filtered = blogsList.filter(b =>
+        (b.title || "").toLowerCase().includes(query) ||
+        (b.desc || "").toLowerCase().includes(query) ||
+        (b.tag || "").toLowerCase().includes(query)
+      );
+
+      if (!filtered.length) {
+        container.innerHTML = `<p style="color:var(--text-muted); grid-column:1/-1;">Žádné články neodpovídají hledání.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(b => `
+        <article class="blog-card">
+          ${b.image ? `<img class="blog-cover" src="${escapeHtml(b.image)}" alt="${escapeHtml(b.title)}" loading="lazy" />` : ""}
+          <div class="blog-body">
+            <span class="blog-tag">${escapeHtml(b.tag || "Blog")}</span>
+            <h2 class="blog-title">${escapeHtml(b.title)}</h2>
+            <p class="blog-excerpt">${escapeHtml(b.desc)}</p>
+            <div class="blog-footer">
+              <span>📅 ${escapeHtml(b.date || "")}</span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn btn-primary btn-sm" onclick="openArticle(${b.id})">Číst článek</button>
+                ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteBlog(${b.id})">Smazat</button>` : ""}
+              </div>
+            </div>
+          </div>
+        </article>
+      `).join("");
+    };
+
+    window.openArticle = (id) => {
+      const article = blogsList.find(b => b.id === id);
+      if (!article) return;
+      openedArticleId = id;
+
+      document.getElementById("read-tag").textContent = article.tag || "Blog";
+      document.getElementById("read-title").textContent = article.title;
+      document.getElementById("read-meta").textContent = `Publikováno: ${article.date || "2026"} • Autor: D3po.tv`;
+      document.getElementById("read-content").textContent = article.desc;
+
+      const imgEl = document.getElementById("read-image");
+      if (article.image) {
+        imgEl.src = article.image;
+        imgEl.style.display = "block";
+      } else {
+        imgEl.style.display = "none";
+      }
+
+      const extEl = document.getElementById("read-ext-link");
+      if (article.url) {
+        extEl.href = article.url;
+        extEl.style.display = "inline-flex";
+      } else {
+        extEl.style.display = "none";
+      }
+
+      document.getElementById("read-modal").classList.add("open");
+    };
+
+    window.copyArticleLink = async () => {
+      const url = `${window.location.origin}${window.location.pathname}?id=${openedArticleId}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast("Odkaz na článek zkopírován!", "success");
+      } catch (_) {
+        showToast(url, "info");
+      }
+    };
+
+    document.getElementById("new-blog-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser || currentUser.email?.toLowerCase() !== ADMIN_EMAIL) return;
+
+      setSaveAnimation("saving", "Publikuji článek...");
+      const newPost = {
+        id: Date.now(),
+        title: document.getElementById("blog-title-input").value.trim(),
+        tag: document.getElementById("blog-tag-input").value.trim() || "Novinky",
+        image: document.getElementById("blog-image-input").value.trim(),
+        url: document.getElementById("blog-url-input").value.trim(),
+        desc: document.getElementById("blog-desc-input").value.trim(),
+        date: new Date().toLocaleDateString("cs-CZ")
+      };
+
+      try {
+        blogsList.unshift(newPost);
+        await saveBlogs();
+        renderBlogs();
+        e.target.reset();
+        setSaveAnimation("done", "Článek publikován!");
+      } catch (err) {
+        setSaveAnimation("hide");
+        showToast("Chyba ukládání: " + err.message, "error");
+      }
+    });
+
+    window.deleteBlog = async (id) => {
+      if (!confirm("Opravdu smazat tento článek?")) return;
+      setSaveAnimation("saving", "Mažu článek...");
+      try {
+        blogsList = blogsList.filter(b => b.id !== id);
+        await saveBlogs();
+        renderBlogs();
+        setSaveAnimation("done", "Článek smazán!");
+      } catch (err) {
+        setSaveAnimation("hide");
+        showToast("Chyba mazání: " + err.message, "error");
+      }
+    };
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, m => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[m]));
+    }
+
+    loadBlogs();
+  </script>
+</body>
+</html>
