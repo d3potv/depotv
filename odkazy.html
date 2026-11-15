@@ -460,6 +460,7 @@
     </footer>
   </div>
 
+  <!-- MODÁL: PŘIHLÁŠENÍ -->
   <div class="modal-backdrop" id="auth-modal">
     <div class="modal">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -661,7 +662,7 @@
       try {
         await setDoc(doc(db, "odkazy", linkId), newLink);
         setSaveAnimation("done", "Uloženo!");
-        showToast("Odkaz úspěšně přidán!", "success");
+        showToast("Odkaz úspěšně přídán!", "success");
         e.target.reset();
         loadLinks();
       } catch (err) {
