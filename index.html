@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>D3po.tv | Domovská stránka</title>
+  <meta property="og:title" content="D3po.tv — Oficiální portál" />
+  <meta property="og:description" content="Blogy, projekty, odkazy a novinky od D3po.tv." />
+  <meta name="theme-color" content="#0a0a0f" />
+
+  <!-- Písma: Inter pro UI a Pacifico / Caveat pro Apple Hello styl -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #09090d;
+      --bg-card: rgba(20, 21, 30, 0.72);
+      --bg-card-hover: rgba(28, 30, 44, 0.88);
+      --border: rgba(255, 255, 255, 0.09);
+      --border-glow: rgba(99, 102, 241, 0.45);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #6366f1;
+      --accent-2: #06b6d4;
+      --danger: #ef4444;
+      --success: #10b981;
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Animované pozadí */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.35;
+      animation: floatOrb 16s infinite alternate ease-in-out;
+    }
+    .orb-1 { width: 340px; height: 340px; background: #4f46e5; top: -80px; left: -60px; }
+    .orb-2 { width: 300px; height: 300px; background: #0891b2; bottom: -60px; right: -40px; animation-delay: -6s; }
+    .orb-3 { width: 220px; height: 220px; background: #7c3aed; top: 45%; left: 40%; animation-delay: -11s; }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(35px, -45px) scale(1.15); }
+    }
+
+    /* ================= APPLE HELLO UVÍTACÍ OBRAZOVKA ================= */
+    #hello-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #000000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.8s;
+    }
+    #hello-splash.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .hello-svg {
+      width: min(82vw, 440px);
+      height: auto;
+      overflow: visible;
+    }
+    .hello-text {
+      font-family: 'Pacifico', cursive;
+      font-size: 92px;
+      fill: transparent;
+      stroke: url(#helloGrad);
+      stroke-width: 2.6;
+      stroke-dasharray: 850;
+      stroke-dashoffset: 850;
+      animation: drawHello 2.7s cubic-bezier(0.37, 0, 0.63, 1) forwards,
+                 fillHello 0.9s ease 2.1s forwards;
+    }
+    .hello-sub {
+      margin-top: 14px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeUp 0.7s ease 2.2s forwards;
+    }
+    @keyframes drawHello {
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes fillHello {
+      to { fill: #ffffff; stroke-width: 0.5; }
+    }
+
+    /* ================= OZNÁMENÍ (BANNER + TOASTS) ================= */
+    .announcement-bar {
+      background: linear-gradient(90deg, rgba(99,102,241,0.22), rgba(6,182,212,0.22));
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      font-size: 0.84rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      backdrop-filter: blur(12px);
+    }
+    .badge-pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      box-shadow: 0 0 10px var(--accent-2);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.5; }
+    }
+
+    #toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 16px;
+      left: 16px;
+      max-width: 400px;
+      margin-left: auto;
+      z-index: 8000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      background: rgba(18, 20, 30, 0.95);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      color: var(--text);
+      padding: 13px 16px;
+      border-radius: 14px;
+      font-size: 0.88rem;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+      backdrop-filter: blur(14px);
+      animation: slideToast 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: auto;
+    }
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--danger); }
+    @keyframes slideToast {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* ================= LAYOUT & NAVIGACE ================= */
+    .container {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 20px 16px 80px;
+    }
+
+    header.navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(16px);
+      margin-bottom: 24px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 1rem;
+      color: #fff;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Horizontálně scrollovatelné menu pro mobily */
+    .page-links-bar {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 26px;
+      scrollbar-width: none;
+      animation: fadeUp 0.7s ease 0.1s both;
+    }
+    .page-links-bar::-webkit-scrollbar { display: none; }
+
+    .nav-pill {
+      white-space: nowrap;
+      text-decoration: none;
+      color: var(--text);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .nav-pill:hover, .nav-pill.active {
+      background: rgba(99, 102, 241, 0.22);
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+    }
+
+    /* ================= TLAČÍTKA A VSTUPY ================= */
+    .btn {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      border-color: transparent;
+      color: #fff;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.16);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+    }
+    .btn-sm { padding: 7px 12px; font-size: 0.8rem; border-radius: 10px; }
+
+    input, textarea, select {
+      width: 100%;
+      background: rgba(10, 11, 16, 0.85);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    /* ================= HERO & KARTY ================= */
+    .hero {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px 24px;
+      margin-bottom: 28px;
+      backdrop-filter: blur(18px);
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.75s ease 0.15s both;
+    }
+    .hero h1 {
+      font-size: clamp(1.75rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--text-muted);
+      max-width: 620px;
+      font-size: 0.98rem;
+      margin-bottom: 20px;
+    }
+
+    .grid-sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      animation: fadeUp 0.8s ease 0.2s both;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      backdrop-filter: blur(14px);
+      transition: transform 0.25s ease, border-color 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-3px);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .feed-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .feed-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      transition: background 0.2s;
+    }
+    .feed-item:hover { background: rgba(255,255,255,0.06); }
+    .feed-item h4 { font-size: 0.98rem; margin-bottom: 4px; }
+    .feed-item p { font-size: 0.86rem; color: var(--text-muted); }
+    .feed-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* ================= ADMIN PANEL (POUZE MILOVNIKMHD@GMAIL.COM) ================= */
+    #admin-panel {
+      display: none;
+      margin-bottom: 28px;
+      background: linear-gradient(145deg, rgba(99,102,241,0.14), rgba(20,21,30,0.88));
+      border: 1px solid var(--border-glow);
+      border-radius: 22px;
+      padding: 22px;
+      animation: fadeUp 0.5s ease;
+    }
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    /* ================= MODÁLNÍ OKNA (AUTH & PROFIL) ================= */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 5000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #12131c;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      animation: scaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0.93); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: rgba(0,0,0,0.35);
+      padding: 5px;
+      border-radius: 12px;
+      margin: 16px 0;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px;
+      border-radius: 9px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .avatar-option {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      object-fit: cover;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .avatar-option:hover, .avatar-option.selected {
+      border-color: var(--accent-2);
+      transform: scale(1.1);
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      padding: 5px 12px 5px 6px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .user-chip img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+    }
+    footer a { color: var(--text-muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <!-- 1. APPLE HELLO UVÍTACÍ OBRAZOVKA -->
+  <div id="hello-splash">
+    <svg class="hello-svg" viewBox="0 0 420 140">
+      <defs>
+        <linearGradient id="helloGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#6366f1" />
+          <stop offset="50%" stop-color="#06b6d4" />
+          <stop offset="100%" stop-color="#a855f7" />
+        </linearGradient>
+      </defs>
+      <text x="50%" y="98" text-anchor="middle" class="hello-text">Hello</text>
+    </svg>
+    <div class="hello-sub">Vítejte na portálu D3po.tv</div>
+  </div>
+
+  <!-- Pozadí -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- 2. OZNÁMENÍ -->
+  <div class="announcement-bar">
+    <span class="badge-pulse"></span>
+    <span id="announcement-text">Vítejte na novém webu D3po.tv! Přihlaste se pro správu profilu a sledování novinek.</span>
+  </div>
+  <div id="toast-container"></div>
+
+  <div class="container">
+    <!-- HLAVIČKA -->
+    <header class="navbar">
+      <a href="#" class="brand">
+        <div class="brand-logo">D3</div>
+        <span>D3po.tv</span>
+      </a>
+      <div class="nav-actions">
+        <button class="btn btn-sm" onclick="replayHello()" title="Přehrát animaci Hello">👋 Hello</button>
+        <div id="auth-header-slot">
+          <button class="btn btn-primary" onclick="openAuthModal()">Přihlásit se</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 3. ODKAZY NA PODSTRÁNKY -->
+    <nav class="page-links-bar" aria-label="Hlavní navigace">
+      <a class="nav-pill active" href="https://d3potv.github.io/depotv/">🏠 Domů</a>
+      <a class="nav-pill" href="https://d3potv.github.io/depotv/blogy">📝 Blogy</a>
+      <a class="nav-pill" href="https://d3potv.github.io/depotv/projekty">🚀 Projekty</a>
+      <a class="nav-pill" href="https://d3potv.github.io/depotv/odkazy">🔗 Odkazy</a>
+      <a class="nav-pill" href="https://d3potv.github.io/depotv/tvurce">👤 Tvůrce</a>
+      <a class="nav-pill" href="https://d3potv.github.io/depotv/copyright">©️ Copyright</a>
+    </nav>
+
+    <!-- HERO SEKCE -->
+    <section class="hero">
+      <h1>D3po.tv — Komunitní rozcestník</h1>
+      <p>Sleduj nejnovější články na blogu, rozpracované projekty a důležité odkazy na jednom místě. Veškerý obsah se načítá živě z Firebase Storage.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a href="https://d3potv.github.io/depotv/blogy" class="btn btn-primary">Přejít na Blogy</a>
+        <a href="https://d3potv.github.io/depotv/projekty" class="btn">Prozkoumat Projekty</a>
+      </div>
+    </section>
+
+    <!-- 4. ADMIN PANEL PRO milovnikmhd@gmail.com (FIREBASE STORAGE) -->
+    <section id="admin-panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <h3 style="font-size:1.15rem;">⚡ Admin Správa Obsahu (Firebase Storage)</h3>
+          <p style="font-size:0.84rem; color:var(--text-muted);">Přihlášen jako <strong>milovnikmhd@gmail.com</strong> — změny se ukládají do Storage JSON souborů.</p>
+        </div>
+        <span style="font-size:0.78rem; padding:4px 10px; border-radius:999px; background:rgba(16,185,129,0.2); color:#6ee7b7;">Admin aktivní</span>
+      </div>
+
+      <form id="admin-add-form" class="admin-grid">
+        <div>
+          <label style="font-size:0.8rem; color:var(--text-muted);">Sekce</label>
+          <select id="admin-category" required>
+            <option value="blogy">📝 Blogy</option>
+            <option value="projekty">🚀 Projekty</option>
+            <option value="odkazy">🔗 Odkazy</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.8rem; color:var(--text-muted);">Název / Titulek</label>
+          <input type="text" id="admin-title" placeholder="Např. Nový update projektu..." required />
+        </div>
+        <div>
+          <label style="font-size:0.8rem; color:var(--text-muted);">URL odkaz (volitelné)</label>
+          <input type="url" id="admin-url" placeholder="https://..." />
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label style="font-size:0.8rem; color:var(--text-muted);">Text / Popis</label>
+          <textarea id="admin-desc" rows="2" placeholder="Obsah článku nebo popis odkazu/projektu..." required></textarea>
+        </div>
+        <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end;">
+          <button type="submit" class="btn btn-primary" id="admin-submit-btn">Uložit do Firebase Storage</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 5. PŘEHLED OBSAHU Z FIREBASE STORAGE -->
+    <section class="grid-sections">
+      <!-- Blogy -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📝 Nejnovější blogy</span>
+          <a href="https://d3potv.github.io/depotv/blogy" class="btn btn-sm">Vše →</a>
+        </div>
+        <div class="feed-list" id="list-blogy">
+          <p style="font-size:0.86rem; color:var(--text-muted);">Načítám blogy ze Storage...</p>
+        </div>
+      </div>
+
+      <!-- Projekty -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🚀 Projekty</span>
+          <a href="https://d3potv.github.io/depotv/projekty" class="btn btn-sm">Vše →</a>
+        </div>
+        <div class="feed-list" id="list-projekty">
+          <p style="font-size:0.86rem; color:var(--text-muted);">Načítám projekty ze Storage...</p>
+        </div>
+      </div>
+
+      <!-- Odkazy -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🔗 Důležité odkazy</span>
+          <a href="https://d3potv.github.io/depotv/odkazy" class="btn btn-sm">Vše →</a>
+        </div>
+        <div class="feed-list" id="list-odkazy">
+          <p style="font-size:0.86rem; color:var(--text-muted);">Načítám odkazy ze Storage...</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span>© 2026 D3po.tv — Všechna práva vyhrazena.</span>
+      <div style="display:flex; gap:14px; flex-wrap:wrap;">
+        <a href="https://d3potv.github.io/depotv/blogy">Blogy</a>
+        <a href="https://d3potv.github.io/depotv/projekty">Projekty</a>
+        <a href="https://d3potv.github.io/depotv/odkazy">Odkazy</a>
+        <a href="https://d3potv.github.io/depotv/tvurce">Tvůrce</a>
+        <a href="https://d3potv.github.io/depotv/copyright">Copyright</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ================= MODÁLNÍ OKNO: PŘIHLÁŠENÍ ================= -->
+  <div class="modal-backdrop" id="auth-modal">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Přihlášení / Registrace</h3>
+        <button class="btn btn-sm" onclick="closeModals()">✕</button>
+      </div>
+
+      <button class="btn" style="width:100%; margin-top:16px; background:#fff; color:#111;" onclick="loginGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Pokračovat přes Google
+      </button>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchAuthTab('email', this)">E-mail + Heslo</button>
+        <button class="tab-btn" onclick="switchAuthTab('register', this)">Registrace</button>
+        <button class="tab-btn" onclick="switchAuthTab('phone', this)">Telefon (SMS)</button>
+      </div>
+
+      <!-- Tab: Přihlášení E-mail + Heslo -->
+      <form id="form-login-email" style="display:flex; flex-direction:column; gap:10px;">
+        <input type="email" id="login-email" placeholder="Tvůj e-mail" required />
+        <input type="password" id="login-pass" placeholder="Heslo" required />
+        <button type="submit" class="btn btn-primary">Přihlásit se e-mailem</button>
+        <button type="button" class="btn btn-sm" onclick="resetPassword()">Zapomenuté heslo?</button>
+      </form>
+
+      <!-- Tab: Registrace E-mail + Heslo -->
+      <form id="form-register-email" style="display:none; flex-direction:column; gap:10px;">
+        <input type="text" id="reg-name" placeholder="Přezdívka" required />
+        <input type="email" id="reg-email" placeholder="E-mail" required />
+        <input type="password" id="reg-pass" placeholder="Heslo (min. 6 znaků)" minlength="6" required />
+        <button type="submit" class="btn btn-primary">Vytvořit účet</button>
+      </form>
+
+      <!-- Tab: Telefonní číslo -->
+      <div id="form-login-phone" style="display:none; flex-direction:column; gap:10px;">
+        <input type="tel" id="phone-number" placeholder="+420 777 123 456" />
+        <div id="recaptcha-container"></div>
+        <button type="button" class="btn btn-primary" onclick="sendSmsCode()">Odeslat ověřovací SMS</button>
+        <div id="sms-verify-box" style="display:none; flex-direction:column; gap:10px; margin-top:6px;">
+          <input type="text" id="sms-code" placeholder="6místný kód z SMS" />
+          <button type="button" class="btn btn-primary" onclick="confirmSmsCode()">Ověřit kód a přihlásit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODÁLNÍ OKNO: NASTAVENÍ ÚČTU & PROFILOVKA ================= -->
+  <div class="modal-backdrop" id="profile-modal">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Můj účet</h3>
+        <button class="btn btn-sm" onclick="closeModals()">✕</button>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:14px; margin:16px 0; padding:12px; background:rgba(255,255,255,0.04); border-radius:14px;">
+        <img id="profile-preview-img" src="https://api.dicebear.com/9.x/bottts-neutral/svg?seed=D3po" alt="Avatar" style="width:58px; height:58px; border-radius:50%; object-fit:cover; border:2px solid var(--accent);" />
+        <div>
+          <div id="profile-display-name" style="font-weight:700;">Uživatel</div>
+          <div id="profile-display-email" style="font-size:0.82rem; color:var(--text-muted);">—</div>
+          <div id="profile-backup-badge" style="font-size:0.75rem; color:var(--accent-2); margin-top:2px;"></div>
+        </div>
+      </div>
+
+      <!-- Výběr profilovky -->
+      <label style="font-size:0.84rem; font-weight:600;">Vyber profilovku účtu:</label>
+      <div class="avatar-grid" id="avatar-presets"></div>
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <input type="url" id="custom-avatar-url" placeholder="Nebo vlož vlastní URL obrázku..." />
+        <button class="btn btn-primary btn-sm" onclick="saveAvatarUrl()">Uložit</button>
+      </div>
+
+      <!-- Přidání záložního e-mailu / propojení účtu -->
+      <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:10px;">
+        <label style="font-size:0.84rem; font-weight:600;">Záložní e-mail / propojení přihlášení:</label>
+        <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px;">Přidej si k účtu záložní e-mail nebo propoj další přihlašovací metodu.</p>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input type="email" id="backup-email-input" placeholder="zalozni@email.cz" />
+          <button class="btn btn-sm" onclick="saveBackupEmail()">Uložit záložní</button>
+        </div>
+        <button class="btn btn-sm" style="width:100%;" onclick="linkBackupGoogle()">🔗 Propojit další Google účet</button>
+      </div>
+
+      <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:16px; display:flex; justify-content:space-between;">
+        <button class="btn btn-danger" onclick="logoutUser()">Odhlásit se</button>
+        <button class="btn" onclick="closeModals()">Hotovo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FIREBASE LOGIKA ================= -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-analytics.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      GoogleAuthProvider,
+      signInWithPopup,
+      linkWithPopup,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      sendPasswordResetEmail,
+      updateProfile,
+      RecaptchaVerifier,
+      signInWithPhoneNumber,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
+    import {
+      getStorage,
+      ref,
+      uploadString,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAY8RGA-VpZwbZVCQ_6kmQW4ugmzWc-uKM",
+      authDomain: "d3potv.firebaseapp.com",
+      projectId: "d3potv",
+      storageBucket: "d3potv.firebasestorage.app",
+      messagingSenderId: "665497735368",
+      appId: "1:665497735368:web:0c76d98d3c5833e4e015fd",
+      measurementId: "G-NGY110XRHB"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+
+    const ADMIN_EMAIL = "milovnikmhd@gmail.com";
+    let currentUser = null;
+    let confirmationResult = null;
+    let storeData = { blogy: [], projekty: [], odkazy: [] };
+
+    const AVATAR_PRESETS = [
+      "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=D3po",
+      "https://api.dicebear.com/9.x/avataaars/svg?seed=MHD",
+      "https://api.dicebear.com/9.x/shapes/svg?seed=Tram",
+      "https://api.dicebear.com/9.x/thumbs/svg?seed=Bus",
+      "https://api.dicebear.com/9.x/identicon/svg?seed=Opava"
+    ];
+
+    // --- APPLE HELLO SPLASH ---
+    window.replayHello = () => {
+      const splash = document.getElementById("hello-splash");
+      splash.classList.remove("hidden");
+      const svg = splash.querySelector("svg");
+      svg.innerHTML = svg.innerHTML; // Restart SVG animace
+      setTimeout(() => splash.classList.add("hidden"), 3400);
+    };
+
+    if (!sessionStorage.getItem("d3po_hello_shown")) {
+      sessionStorage.setItem("d3po_hello_shown", "1");
+      setTimeout(() => {
+        document.getElementById("hello-splash").classList.add("hidden");
+      }, 3400);
+    } else {
+      document.getElementById("hello-splash").classList.add("hidden");
+    }
+
+    // --- NOTIFIKACE (TOASTS) ---
+    window.showToast = (msg, type = "info") => {
+      const container = document.getElementById("toast-container");
+      const el = document.createElement("div");
+      el.className = `toast ${type}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(10px)";
+        setTimeout(() => el.remove(), 300);
+      }, 4200);
+    };
+
+    // --- MODÁLY & ZÁLOŽKY ---
+    window.openAuthModal = () => document.getElementById("auth-modal").classList.add("open");
+    window.openProfileModal = () => {
+      renderAvatarPresets();
+      document.getElementById("profile-modal").classList.add("open");
+    };
+    window.closeModals = () => {
+      document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.remove("open"));
+    };
+
+    window.switchAuthTab = (tab, btn) => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("form-login-email").style.display = tab === "email" ? "flex" : "none";
+      document.getElementById("form-register-email").style.display = tab === "register" ? "flex" : "none";
+      document.getElementById("form-login-phone").style.display = tab === "phone" ? "flex" : "none";
+    };
+
+    // --- AUTH METODY ---
+    window.loginGoogle = async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        closeModals();
+        showToast("Úspěšně přihlášeno přes Google!", "success");
+      } catch (e) {
+        showToast("Chyba Google přihlášení: " + e.message, "error");
+      }
+    };
+
+    document.getElementById("form-login-email").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value.trim();
+      const pass = document.getElementById("login-pass").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        closeModals();
+        showToast("Vítej zpět!", "success");
+      } catch (err) {
+        showToast("Přihlášení selhalo: " + err.message, "error");
+      }
+    });
+
+    document.getElementById("form-register-email").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("reg-name").value.trim();
+      const email = document.getElementById("reg-email").value.trim();
+      const pass = document.getElementById("reg-pass").value;
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        await updateProfile(cred.user, {
+          displayName: name,
+          photoURL: AVATAR_PRESETS[0]
+        });
+        closeModals();
+        showToast("Účet byl vytvořen!", "success");
+      } catch (err) {
+        showToast("Registrace selhala: " + err.message, "error");
+      }
+    });
+
+    window.resetPassword = async () => {
+      const email = document.getElementById("login-email").value.trim();
+      if (!email) return showToast("Zadej nejdřív svůj e-mail do pole výše.", "error");
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showToast("Odkaz pro obnovu hesla byl odeslán na e-mail.", "success");
+      } catch (err) {
+        showToast("Chyba: " + err.message, "error");
+      }
+    };
+
+    // Telefonní SMS přihlášení
+    window.sendSmsCode = async () => {
+      const phone = document.getElementById("phone-number").value.trim();
+      if (!phone.startsWith("+")) return showToast("Zadej číslo i s předvolbou, např. +420...", "error");
+      try {
+        if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
+        }
+        confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
+        document.getElementById("sms-verify-box").style.display = "flex";
+        showToast("Ověřovací SMS byla odeslána!", "success");
+      } catch (err) {
+        showToast("Chyba SMS: " + err.message, "error");
+      }
+    };
+
+    window.confirmSmsCode = async () => {
+      const code = document.getElementById("sms-code").value.trim();
+      if (!confirmationResult || !code) return;
+      try {
+        await confirmationResult.confirm(code);
+        closeModals();
+        showToast("Telefonní číslo ověřeno!", "success");
+      } catch (err) {
+        showToast("Neplatný SMS kód: " + err.message, "error");
+      }
+    };
+
+    window.logoutUser = async () => {
+      await signOut(auth);
+      closeModals();
+      showToast("Byl jsi odhlášen.");
+    };
+
+    // --- PROFILOVKA & ZÁLOŽNÍ E-MAIL ---
+    function renderAvatarPresets() {
+      const box = document.getElementById("avatar-presets");
+      box.innerHTML = "";
+      AVATAR_PRESETS.forEach(url => {
+        const img = document.createElement("img");
+        img.src = url;
+        img.className = "avatar-option" + (currentUser?.photoURL === url ? " selected" : "");
+        img.onclick = () => updateAvatar(url);
+        box.appendChild(img);
+      });
+    }
+
+    async function updateAvatar(url) {
+      if (!currentUser) return;
+      try {
+        await updateProfile(currentUser, { photoURL: url });
+        document.getElementById("profile-preview-img").src = url;
+        updateUserUI(currentUser);
+        renderAvatarPresets();
+        showToast("Profilovka změněna!", "success");
+      } catch (err) {
+        showToast("Chyba při změně profilovky: " + err.message, "error");
+      }
+    }
+
+    window.saveAvatarUrl = () => {
+      const url = document.getElementById("custom-avatar-url").value.trim();
+      if (url) updateAvatar(url);
+    };
+
+    window.saveBackupEmail = async () => {
+      if (!currentUser) return;
+      const backup = document.getElementById("backup-email-input").value.trim();
+      if (!backup) return showToast("Zadej záložní e-mail.", "error");
+      localStorage.setItem(`backup_email_${currentUser.uid}`, backup);
+      // Uložení zálohy i do Firebase Storage pod profil uživatele
+      try {
+        const userRef = ref(storage, `users/${currentUser.uid}/profile.json`);
+        await uploadString(userRef, JSON.stringify({
+          uid: currentUser.uid,
+          primaryEmail: currentUser.email,
+          backupEmail: backup,
+          updatedAt: new Date().toISOString()
+        }), "raw", { contentType: "application/json" });
+      } catch (_) {}
+      document.getElementById("profile-backup-badge").textContent = "Záložní e-mail: " + backup;
+      showToast("Záložní e-mail uložen!", "success");
+    };
+
+    window.linkBackupGoogle = async () => {
+      if (!currentUser) return;
+      try {
+        const provider = new GoogleAuthProvider();
+        const res = await linkWithPopup(currentUser, provider);
+        const linkedMail = res.user.providerData.map(p => p.email).filter(Boolean).join(", ");
+        showToast("Propojeno! Aktivní e-maily: " + linkedMail, "success");
+      } catch (err) {
+        showToast("Propojení se nezdařilo: " + err.message, "error");
+      }
+    };
+
+    // --- SLEDOVÁNÍ STAVU PŘIHLÁŠENÍ ---
+    function updateUserUI(user) {
+      const slot = document.getElementById("auth-header-slot");
+      const adminPanel = document.getElementById("admin-panel");
+
+      if (user) {
+        const avatar = user.photoURL || AVATAR_PRESETS[0];
+        const name = user.displayName || user.email || user.phoneNumber || "Uživatel";
+        slot.innerHTML = `
+          <div class="user-chip" onclick="openProfileModal()">
+            <img src="${avatar}" alt="Avatar" />
+            <span style="font-size:0.85rem; font-weight:600;">${name}</span>
+          </div>
+        `;
+        document.getElementById("profile-preview-img").src = avatar;
+        document.getElementById("profile-display-name").textContent = name;
+        document.getElementById("profile-display-email").textContent = user.email || user.phoneNumber || "";
+
+        const savedBackup = localStorage.getItem(`backup_email_${user.uid}`);
+        document.getElementById("profile-backup-badge").textContent = savedBackup ? `Záložní e-mail: ${savedBackup}` : "";
+
+        // Kontrola admin účtu milovnikmhd@gmail.com
+        if (user.email && user.email.toLowerCase() === ADMIN_EMAIL) {
+          adminPanel.style.display = "block";
+        } else {
+          adminPanel.style.display = "none";
+        }
+      } else {
+        slot.innerHTML = `<button class="btn btn-primary" onclick="openAuthModal()">Přihlásit se</button>`;
+        adminPanel.style.display = "none";
+      }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      updateUserUI(user);
+      renderAllLists();
+    });
+
+    // --- FIREBASE STORAGE JAKO ÚLOŽIŠTĚ PRO BLOGY, PROJEKTY A ODKAZY ---
+    async function loadCategoryFromStorage(category) {
+      try {
+        const fileRef = ref(storage, `data/${category}.json`);
+        const url = await getDownloadURL(fileRef);
+        const response = await fetch(url + "&t=" + Date.now());
+        if (!response.ok) throw new Error("Chyba čtení");
+        storeData[category] = await response.json();
+      } catch (err) {
+        // Pokud soubor ve Storage ještě neexistuje, použijeme výchozí ukázková data
+        if (category === "blogy") {
+          storeData.blogy = [{ id: 1, title: "Spuštění nového webu D3po.tv", desc: "Vítejte na přepracované domovské stránce propojené s Firebase.", date: "15. 11. 2026" }];
+        } else if (category === "projekty") {
+          storeData.projekty = [{ id: 1, title: "D3po.tv Web Portál", desc: "Komunitní rozcestník a blogovací systém běžící na GitHub Pages.", url: "https://d3potv.github.io/depotv/projekty", date: "2026" }];
+        } else if (category === "odkazy") {
+          storeData.odkazy = [{ id: 1, title: "YouTube kanál @d3p0.tv", desc: "Oficiální videa, shorts a novinky.", url: "https://youtube.com/@d3p0.tv", date: "Odkaz" }];
+        }
+      }
+    }
+
+    async function saveCategoryToStorage(category) {
+      const fileRef = ref(storage, `data/${category}.json`);
+      const jsonString = JSON.stringify(storeData[category], null, 2);
+      await uploadString(fileRef, jsonString, "raw", { contentType: "application/json" });
+    }
+
+    function renderCategory(category) {
+      const container = document.getElementById(`list-${category}`);
+      const items = storeData[category] || [];
+      const isAdmin = currentUser && currentUser.email?.toLowerCase() === ADMIN_EMAIL;
+
+      if (items.length === 0) {
+        container.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted);">Zatím zde nejsou žádné položky.</p>`;
+        return;
+      }
+
+      container.innerHTML = items.slice(0, 5).map(item => `
+        <div class="feed-item">
+          <h4>${escapeHtml(item.title)}</h4>
+          <p>${escapeHtml(item.desc)}</p>
+          <div class="feed-meta">
+            <span>${escapeHtml(item.date || "")}</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+              ${item.url ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" style="color:var(--accent-2); text-decoration:none; font-weight:600;">Otevřít ↗</a>` : ""}
+              ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteItem('${category}', ${item.id})">Smazat</button>` : ""}
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderAllLists() {
+      renderCategory("blogy");
+      renderCategory("projekty");
+      renderCategory("odkazy");
+    }
+
+    // Přidání položky adminem do Firebase Storage
+    document.getElementById("admin-add-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser || currentUser.email?.toLowerCase() !== ADMIN_EMAIL) {
+        return showToast("Nemáš oprávnění!", "error");
+      }
+
+      const btn = document.getElementById("admin-submit-btn");
+      btn.disabled = true;
+      btn.textContent = "Ukládám...";
+
+      const category = document.getElementById("admin-category").value;
+      const newItem = {
+        id: Date.now(),
+        title: document.getElementById("admin-title").value.trim(),
+        url: document.getElementById("admin-url").value.trim(),
+        desc: document.getElementById("admin-desc").value.trim(),
+        date: new Date().toLocaleDateString("cs-CZ")
+      };
+
+      try {
+        storeData[category].unshift(newItem);
+        await saveCategoryToStorage(category);
+        renderCategory(category);
+        e.target.reset();
+        showToast(`Přidáno do sekce ${category} ve Firebase Storage!`, "success");
+      } catch (err) {
+        showToast("Chyba zápisu do Storage (zkontroluj Storage Rules): " + err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Uložit do Firebase Storage";
+      }
+    });
+
+    window.deleteItem = async (category, id) => {
+      if (!confirm("Opravdu smazat tuto položku?")) return;
+      try {
+        storeData[category] = storeData[category].filter(i => i.id !== id);
+        await saveCategoryToStorage(category);
+        renderCategory(category);
+        showToast("Položka smazána.", "success");
+      } catch (err) {
+        showToast("Chyba mazání: " + err.message, "error");
+      }
+    };
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, m => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[m]));
+    }
+
+    // Počáteční načtení dat ze Storage
+    Promise.all([
+      loadCategoryFromStorage("blogy"),
+      loadCategoryFromStorage("projekty"),
+      loadCategoryFromStorage("odkazy")
+    ]).then(renderAllLists);
+  </script>
+</body>
+</html>
