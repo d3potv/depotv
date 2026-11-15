@@ -45,7 +45,6 @@
       line-height: 1.6;
     }
 
-    /* Ambientní pozadí */
     .ambient-bg {
       position: fixed;
       inset: 0;
@@ -68,7 +67,6 @@
       100% { transform: translate(40px, -50px) scale(1.15); }
     }
 
-    /* Animovaná tlačítka */
     .btn {
       position: relative;
       overflow: hidden;
@@ -116,7 +114,6 @@
     }
     .btn-sm { padding: 7px 12px; font-size: 0.8rem; border-radius: 10px; }
 
-    /* Animace ukládání */
     .save-status-pill {
       position: fixed;
       top: 18px;
@@ -151,7 +148,6 @@
       display: grid; place-items: center; font-size: 0.75rem;
     }
 
-    /* Toasty */
     #toast-container {
       position: fixed;
       bottom: 20px; right: 16px; left: 16px;
@@ -174,7 +170,6 @@
     .toast.success { border-left-color: var(--success); }
     .toast.error { border-left-color: var(--danger); }
 
-    /* Layout */
     .container {
       max-width: 1040px;
       margin: 0 auto;
@@ -224,7 +219,6 @@
       transform: translateY(-2px);
     }
 
-    /* Hlavička sekce + vyhledávání */
     .blog-header-box {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -270,7 +264,6 @@
     }
     input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 
-    /* Admin editor */
     #admin-blog-editor {
       display: none;
       background: linear-gradient(145deg, rgba(99,102,241,0.16), rgba(18,20,30,0.92));
@@ -286,7 +279,6 @@
       margin-top: 14px;
     }
 
-    /* Seznam článků */
     .blog-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
@@ -354,7 +346,6 @@
       color: var(--text-muted);
     }
 
-    /* Modály */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -432,7 +423,6 @@
   <div id="toast-container"></div>
 
   <div class="container">
-    <!-- HLAVIČKA -->
     <header class="navbar">
       <a href="https://d3potv.github.io/depotv/" class="brand">
         <div class="brand-logo">D3</div>
@@ -443,7 +433,6 @@
       </div>
     </header>
 
-    <!-- NAVIGACE -->
     <nav class="page-links-bar" aria-label="Hlavní navigace">
       <a class="nav-pill" href="https://d3potv.github.io/depotv/">🏠 Domů</a>
       <a class="nav-pill active" href="https://d3potv.github.io/depotv/blogy">📝 Blogy</a>
@@ -462,12 +451,11 @@
       </div>
     </section>
 
-    <!-- ADMIN EDITOR (Bleskový zápis) -->
     <section id="admin-blog-editor">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <div>
           <h3 style="font-size:1.12rem;">✍️ Napsat nový článek na blog</h3>
-          <p style="font-size:0.82rem; color:var(--text-muted);">Optimalizováno pro bleskové uložení.</p>
+          <p style="font-size:0.82rem; color:var(--text-muted);">Přímý zápis s ověřením chyb.</p>
         </div>
         <span style="font-size:0.75rem; padding:4px 10px; border-radius:999px; background:rgba(16,185,129,0.2); color:#6ee7b7;">Admin aktivní</span>
       </div>
@@ -499,7 +487,6 @@
       </form>
     </section>
 
-    <!-- SEZNAM ČLÁNKŮ -->
     <section class="blog-grid" id="blogs-container">
       <p style="color:var(--text-muted);">Načítám články...</p>
     </section>
@@ -516,7 +503,6 @@
     </footer>
   </div>
 
-  <!-- MODÁL: ČTENÍ -->
   <div class="modal-backdrop" id="read-modal">
     <div class="modal">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
@@ -534,7 +520,6 @@
     </div>
   </div>
 
-  <!-- MODÁL: PŘIHLÁŠENÍ -->
   <div class="modal-backdrop" id="auth-modal">
     <div class="modal modal-sm">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -552,7 +537,6 @@
     </div>
   </div>
 
-  <!-- SKRIPT S BLESKOVÝM UPLOADEM -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-analytics.js";
@@ -687,16 +671,22 @@
       }
     }
 
-    // Bleskový asynchronní zápis (nečeká se blokujícím způsobem na celou smyčku vykreslení)
-    async function saveBlogsFast() {
+    // OPRAVENÁ A ROBUSTNÍ FUNKCE PRO ULOŽENÍ S ODCHYCENÍM CHYBY
+    async function saveBlogsToStorage() {
       const fileRef = ref(storage, "data/blogy.json");
-      // Spustí se na pozadí
-      uploadString(fileRef, JSON.stringify(blogsList, null, 2), "raw", { contentType: "application/json" })
-        .then(() => setSaveAnimation("done", "Uloženo do Storage!"))
-        .catch((err) => {
-          setSaveAnimation("hide");
-          showToast("Chyba synchronizace se Storage: " + err.message, "error");
-        });
+      const jsonString = JSON.stringify(blogsList, null, 2);
+
+      setSaveAnimation("saving", "Ukládám do Firebase...");
+
+      try {
+        await uploadString(fileRef, jsonString, "raw", { contentType: "application/json" });
+        setSaveAnimation("done", "Uloženo do Storage!");
+        showToast("Článek úspěšně uložen na server!", "success");
+      } catch (err) {
+        setSaveAnimation("hide");
+        console.error("Storage error:", err);
+        showToast("CHYBA UKLÁDÁNÍ: " + err.message, "error");
+      }
     }
 
     window.renderBlogs = () => {
@@ -756,10 +746,11 @@
       showToast("Odkaz zkopírován!", "success");
     };
 
-    // OKAMŽITÉ OTEVŘENÍ A UPLOAD NA POZADÍ
-    document.getElementById("new-blog-form").addEventListener("submit", (e) => {
+    document.getElementById("new-blog-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (!currentUser || currentUser.email?.toLowerCase() !== ADMIN_EMAIL) return;
+      if (!currentUser || currentUser.email?.toLowerCase() !== ADMIN_EMAIL) {
+        return showToast("Nemáš administrátorská práva!", "error");
+      }
 
       const newPost = {
         id: Date.now(),
@@ -771,24 +762,19 @@
         date: new Date().toLocaleDateString("cs-CZ")
       };
 
-      // 1. Okamžitě přidáme do pole a přepresujeme UI (žádné čekání na server)
       blogsList.unshift(newPost);
       renderBlogs();
       e.target.reset();
 
-      // 2. Zobrazíme rychlou notifikaci
-      setSaveAnimation("saving", "Odesílám na pozadí...");
-
-      // 3. Odeslání na Firebase Storage na pozadí
-      saveBlogsFast();
+      // Počkáme na uložení, aby se případná chyba hned ukázala
+      await saveBlogsToStorage();
     });
 
-    window.deleteBlog = (id) => {
+    window.deleteBlog = async (id) => {
       if (!confirm("Smazat článek?")) return;
       blogsList = blogsList.filter(b => b.id !== id);
       renderBlogs();
-      setSaveAnimation("saving", "Mažu na pozadí...");
-      saveBlogsFast();
+      await saveBlogsToStorage();
     };
 
     function escapeHtml(str) {
