@@ -412,7 +412,7 @@
 
   <div id="save-pill" class="save-status-pill">
     <div id="save-pill-icon" class="spinner"></div>
-    <span id="save-pill-text">Ukládám...</span>
+    <span id="save-pill-text">Ukládám do Firestore...</span>
   </div>
 
   <div class="ambient-bg">
@@ -444,18 +444,18 @@
 
     <section class="blog-header-box">
       <h1>📝 Blogy a novinky</h1>
-      <p style="color:var(--text-muted); font-size:0.95rem;">Všechny články, oznámení ze zákulisí a aktualizace projektů D3po.tv.</p>
+      <p style="color:var(--text-muted); font-size:0.95rem;">Články a aktuality D3po.tv.</p>
       <div class="search-bar">
         <span>🔍</span>
-        <input type="text" id="blog-search" placeholder="Hledat v článcích podle názvu, textu nebo štítku..." oninput="renderBlogs()" />
+        <input type="text" id="blog-search" placeholder="Hledat v článcích..." oninput="renderBlogs()" />
       </div>
     </section>
 
     <section id="admin-blog-editor">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
         <div>
-          <h3 style="font-size:1.12rem;">✍️ Napsat nový článek na blog</h3>
-          <p style="font-size:0.82rem; color:var(--text-muted);">Přímý zápis s ověřením chyb.</p>
+          <h3 style="font-size:1.12rem;">✍️ Napsat nový článek</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted);">Ukládá se do Cloud Firestore.</p>
         </div>
         <span style="font-size:0.75rem; padding:4px 10px; border-radius:999px; background:rgba(16,185,129,0.2); color:#6ee7b7;">Admin aktivní</span>
       </div>
@@ -463,11 +463,11 @@
       <form id="new-blog-form" class="editor-grid">
         <div>
           <label style="font-size:0.8rem; color:var(--text-muted);">Nadpis článku</label>
-          <input type="text" id="blog-title-input" placeholder="Např. Novinka..." required />
+          <input type="text" id="blog-title-input" placeholder="Nadpis..." required />
         </div>
         <div>
           <label style="font-size:0.8rem; color:var(--text-muted);">Štítek / Kategorie</label>
-          <input type="text" id="blog-tag-input" placeholder="Novinky / MHD" value="Novinky" />
+          <input type="text" id="blog-tag-input" placeholder="Novinky" value="Novinky" />
         </div>
         <div>
           <label style="font-size:0.8rem; color:var(--text-muted);">URL obrázku (volitelné)</label>
@@ -479,26 +479,24 @@
         </div>
         <div style="grid-column: 1 / -1;">
           <label style="font-size:0.8rem; color:var(--text-muted);">Celý text článku</label>
-          <textarea id="blog-desc-input" rows="4" placeholder="Obsah článku..." required></textarea>
+          <textarea id="blog-desc-input" rows="4" placeholder="Obsah..." required></textarea>
         </div>
         <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end;">
-          <button type="submit" class="btn btn-primary">Publikovat ihned</button>
+          <button type="submit" class="btn btn-primary">Publikovat</button>
         </div>
       </form>
     </section>
 
     <section class="blog-grid" id="blogs-container">
-      <p style="color:var(--text-muted);">Načítám články...</p>
+      <p style="color:var(--text-muted);">Načítám články z databáze...</p>
     </section>
 
     <footer>
-      <span>© 2026 D3po.tv — Sekce Blogy</span>
+      <span>© 2026 D3po.tv</span>
       <div style="display:flex; gap:14px; flex-wrap:wrap;">
         <a href="https://d3potv.github.io/depotv/">Domů</a>
         <a href="https://d3potv.github.io/depotv/projekty">Projekty</a>
         <a href="https://d3potv.github.io/depotv/odkazy">Odkazy</a>
-        <a href="https://d3potv.github.io/depotv/tvurce">Tvůrce</a>
-        <a href="https://d3potv.github.io/depotv/copyright">Copyright</a>
       </div>
     </footer>
   </div>
@@ -550,11 +548,15 @@
       signOut
     } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
     import {
-      getStorage,
-      ref,
-      uploadString,
-      getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-storage.js";
+      getFirestore,
+      collection,
+      getDocs,
+      setDoc,
+      doc,
+      deleteDoc,
+      query,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAY8RGA-VpZwbZVCQ_6kmQW4ugmzWc-uKM",
@@ -569,7 +571,7 @@
     const app = initializeApp(firebaseConfig);
     getAnalytics(app);
     const auth = getAuth(app);
-    const storage = getStorage(app);
+    const db = getFirestore(app);
 
     const ADMIN_EMAIL = "milovnikmhd@gmail.com";
     const DEFAULT_AVATAR = "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=D3po";
@@ -649,17 +651,24 @@
         slot.innerHTML = `<button class="btn btn-primary" onclick="openAuthModal()">Přihlásit se</button>`;
         editor.style.display = "none";
       }
-      renderBlogs();
+      loadBlogs();
     });
 
+    // Načtení blogů z Cloud Firestore
     async function loadBlogs() {
       try {
-        const fileRef = ref(storage, "data/blogy.json");
-        const url = await getDownloadURL(fileRef);
-        const res = await fetch(url + "&t=" + Date.now());
-        if (!res.ok) throw new Error();
-        blogsList = await res.json();
-      } catch (_) {
+        const q = query(collection(db, "blogy"), orderBy("id", "desc"));
+        const snapshot = await getDocs(q);
+        blogsList = [];
+        snapshot.forEach((docSnap) => {
+          blogsList.push(docSnap.data());
+        });
+
+        if (blogsList.length === 0) {
+          blogsList = [{ id: Date.now(), title: "Vítejte na blogu", tag: "Novinky", desc: "Základní článek.", date: "15. 11. 2026" }];
+        }
+      } catch (err) {
+        console.error("Firestore load error:", err);
         blogsList = [{ id: 1, title: "Vítejte na blogu", tag: "Novinky", desc: "Základní článek.", date: "15. 11. 2026" }];
       }
       renderBlogs();
@@ -671,31 +680,13 @@
       }
     }
 
-    // OPRAVENÁ A ROBUSTNÍ FUNKCE PRO ULOŽENÍ S ODCHYCENÍM CHYBY
-    async function saveBlogsToStorage() {
-      const fileRef = ref(storage, "data/blogy.json");
-      const jsonString = JSON.stringify(blogsList, null, 2);
-
-      setSaveAnimation("saving", "Ukládám do Firebase...");
-
-      try {
-        await uploadString(fileRef, jsonString, "raw", { contentType: "application/json" });
-        setSaveAnimation("done", "Uloženo do Storage!");
-        showToast("Článek úspěšně uložen na server!", "success");
-      } catch (err) {
-        setSaveAnimation("hide");
-        console.error("Storage error:", err);
-        showToast("CHYBA UKLÁDÁNÍ: " + err.message, "error");
-      }
-    }
-
     window.renderBlogs = () => {
       const container = document.getElementById("blogs-container");
-      const query = document.getElementById("blog-search").value.trim().toLowerCase();
+      const queryText = document.getElementById("blog-search").value.trim().toLowerCase();
       const isAdmin = currentUser && currentUser.email?.toLowerCase() === ADMIN_EMAIL;
 
       const filtered = blogsList.filter(b =>
-        (b.title || "").toLowerCase().includes(query) || (b.desc || "").toLowerCase().includes(query)
+        (b.title || "").toLowerCase().includes(queryText) || (b.desc || "").toLowerCase().includes(queryText)
       );
 
       if (!filtered.length) {
@@ -714,7 +705,7 @@
               <span>📅 ${escapeHtml(b.date || "")}</span>
               <div style="display:flex; gap:8px; align-items:center;">
                 <button class="btn btn-primary btn-sm" onclick="openArticle(${b.id})">Číst</button>
-                ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteBlog(${b.id})">Smazat</button>` : ""}
+                ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteBlog('${b.id}')">Smazat</button>` : ""}
               </div>
             </div>
           </div>
@@ -723,7 +714,7 @@
     };
 
     window.openArticle = (id) => {
-      const article = blogsList.find(b => b.id === id);
+      const article = blogsList.find(b => String(b.id) === String(id));
       if (!article) return;
       openedArticleId = id;
       document.getElementById("read-tag").textContent = article.tag || "Blog";
@@ -752,8 +743,9 @@
         return showToast("Nemáš administrátorská práva!", "error");
       }
 
+      const postId = String(Date.now());
       const newPost = {
-        id: Date.now(),
+        id: postId,
         title: document.getElementById("blog-title-input").value.trim(),
         tag: document.getElementById("blog-tag-input").value.trim() || "Novinky",
         image: document.getElementById("blog-image-input").value.trim(),
@@ -762,19 +754,33 @@
         date: new Date().toLocaleDateString("cs-CZ")
       };
 
-      blogsList.unshift(newPost);
-      renderBlogs();
-      e.target.reset();
+      setSaveAnimation("saving", "Ukládám do Firestore...");
 
-      // Počkáme na uložení, aby se případná chyba hned ukázala
-      await saveBlogsToStorage();
+      try {
+        await setDoc(doc(db, "blogy", postId), newPost);
+        setSaveAnimation("done", "Uloženo!");
+        showToast("Článek úspěšně publikován!", "success");
+        e.target.reset();
+        loadBlogs();
+      } catch (err) {
+        setSaveAnimation("hide");
+        console.error("Firestore save error:", err);
+        showToast("CHYBA: " + err.message, "error");
+      }
     });
 
     window.deleteBlog = async (id) => {
       if (!confirm("Smazat článek?")) return;
-      blogsList = blogsList.filter(b => b.id !== id);
-      renderBlogs();
-      await saveBlogsToStorage();
+      setSaveAnimation("saving", "Mažu z databáze...");
+      try {
+        await deleteDoc(doc(db, "blogy", String(id)));
+        setSaveAnimation("done", "Smazáno!");
+        showToast("Článek smazán.", "success");
+        loadBlogs();
+      } catch (err) {
+        setSaveAnimation("hide");
+        showToast("CHYBA: " + err.message, "error");
+      }
     };
 
     function escapeHtml(str) {
@@ -782,8 +788,6 @@
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
       }[m]));
     }
-
-    loadBlogs();
   </script>
 </body>
 </html>
